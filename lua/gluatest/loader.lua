@@ -17,16 +17,45 @@ local getProjectName = function( dir )
     return string.match( dir, "tests/(.+)/.*$" )
 end
 
+local simpleError = function( reason, filePath )
+    return {
+        reason = string.sub( reason, string.find( reason, ":", 3 ) + 2 ),
+        sourceFile = filePath,
+        lineNumber = -1,
+        locals = {}
+    }
+end
+
 local function processFile( dir, fileName, tests )
     if not string.EndsWith( fileName, ".lua" ) then return end
 
     local filePath = dir .. "/" .. fileName
-    local fileOutput = include( filePath )
 
-    if not istable( fileOutput ) then return end
-    if not fileOutput.cases then return end
+    local success, result = pcall( function( filePath )
+        local fileContent = file.Read( filePath, "LUA" )
+        local compiled = CompileString( fileContent, "1", false )
 
-    if SERVER then checkSendToClients( filePath, fileOutput.cases ) end
+        if not isfunction( compiled ) then
+            return simpleError( compiled, filePath )
+        end
+
+        return compiled()
+    end, filePath )
+
+    success = success and istable( result ) and not result.sourceFile
+
+    local fileOutput = nil
+    if success then
+        fileOutput = result
+    else
+        fileOutput = {
+            includeError = istable( result ) and result or simpleError( result, filePath ),
+            groupName = fileName,
+            cases = {}
+        }
+    end
+
+    if SERVER and success then checkSendToClients( filePath, fileOutput.cases ) end
 
     table.insert( tests, {
         fileName = fileName,
@@ -36,7 +65,8 @@ local function processFile( dir, fileName, tests )
         beforeAll = fileOutput.beforeAll or noop,
         beforeEach = fileOutput.beforeEach or noop,
         afterAll = fileOutput.afterAll or noop,
-        afterEach = fileOutput.afterEach or noop
+        afterEach = fileOutput.afterEach or noop,
+        includeError = fileOutput.includeError
     } )
 end
 

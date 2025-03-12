@@ -118,6 +118,12 @@ return function( allTestGroups )
             } )
         end
 
+        if testGroup.includeError ~= nil then
+            setFailed( { name = "Include" }, testGroup.includeError )
+            runNextTestGroup( testGroups )
+            return
+        end
+
         local cases = testGroup.cases
         local caseCount = #cases
 
