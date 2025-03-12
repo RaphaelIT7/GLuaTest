@@ -77,12 +77,12 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
-          git clone --single-branch --branch main --depth 1 https://github.com/CFC-Servers/GLuaTest.git gluatest
+          git clone --single-branch --branch patch-1 --depth 1 https://github.com/RaphaelIT7/GLuaTest.git gluatest
           cd ./gluatest
           cp docker/docker-compose.yml $GITHUB_WORKSPACE/docker-compose.yml
 
           git fetch --quiet --tags
-          latest="$(git describe --tags `git rev-list --tags --max-count=1`)"
+          latest="0.32.2"
           echo "Latest Tag: $latest"
           echo "LATEST_TAG=$latest" >> $GITHUB_OUTPUT
 
