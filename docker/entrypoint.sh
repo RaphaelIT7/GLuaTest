@@ -136,9 +136,6 @@ else
 fi
 
 if [ -f "$gmodroot/debug.log" ]; then
-	ls /var/cores/
-	ls $gmodroot
-
 	cat "$gmodroot/debug.log" # Dump the entire debug log
 
 	echo "::error:: Server crashed! - Failing workflow"
