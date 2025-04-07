@@ -233,6 +233,10 @@ function Helpers.FailCallback( reason )
     local level, info = Helpers.findStackInfo()
     local locals = Helpers.getLocals( level )
 
+    if info:contains("[C]") then
+        print("Found invalid stack info!")
+    end
+
     return {
         reason = cleanReason,
         sourceFile = info.short_src,

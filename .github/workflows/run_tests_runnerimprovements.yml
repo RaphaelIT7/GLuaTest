@@ -60,7 +60,7 @@ on:
         type: string
         required: false
         description: "With tag/branch of GLuaTest to run"
-        default: "main"
+        default: "holylib"
 
       custom-overrides:
         type: string
