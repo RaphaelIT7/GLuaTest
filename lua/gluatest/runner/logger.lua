@@ -237,6 +237,7 @@ function ResultLogger.LogTestFailureDetails( failure )
         local debugInfo = debug.getinfo( case.func )
         errInfo.sourceFile = debugInfo.short_src
         errInfo.lineNumber = debugInfo.linedefined
+        print("Falled back to use debug.getinfo for source file (" .. errInfo.sourceFile .. ")")
     end
 
     ResultLogger.logTestCaseFailure( errInfo )

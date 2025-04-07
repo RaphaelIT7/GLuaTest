@@ -45,6 +45,10 @@ function LogHelpers.getFileLines( filePath )
 
     local cleanPath = LogHelpers.cleanPathForRead( filePath )
     local testFile = file.Open( cleanPath, "r", "LUA" )
+    if not testFile then
+        Error("Was given a invalid file path! (\"" .. filePath .. "\", \"" .. cleanPath .. "\")")
+    end
+
     local fileContents = testFile:Read( testFile:Size() )
     testFile:Close()
 
