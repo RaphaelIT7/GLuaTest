@@ -152,11 +152,9 @@ if [ -f "$gmodroot/debug.log" ]; then
 	exit 1
 fi
 
-status=$?
-
 if [ "$(cat $server/data/gluatest_clean_exit.txt)" = "false" ]; then
     echo "::warning:: Test runner did not exit cleanly. Test results unavailable!"
-    exit "$status"
+    exit 1
 fi
 
 if [ -s "$server/data/gluatest_failures.json" ]; then
