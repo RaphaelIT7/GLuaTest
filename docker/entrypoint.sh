@@ -15,10 +15,10 @@ rm -rf _tmp_ssh _tmp_https
 
 # Copy the overrides overtop the server files
 echo "Copying serverfiles overrides..."
-rsync --verbose --archive $home/serverfiles_override/ $gmodroot/
+rsync --verbose --archive $home/garrysmod_override/ $server/
 
 # Any additional files
-if [ -d $home/_gluatest_artifacts/_gluatest_artifacts/ ]; then
+if [ -n "$(ls -A $home/_gluatest_artifacts/_gluatest_artifacts/)" ]; then
     cp $home/_gluatest_artifacts/_gluatest_artifacts/* $gmodroot/
 
     for file in $gmodroot/*.tar.gz; do \
