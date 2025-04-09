@@ -248,6 +248,11 @@ end
 function ResultLogger.LogTestFailureDetails( failure )
     local case = failure.case
     local errInfo = failure.errInfo or {}
+    if isstring(errInfo) then -- Yes, this can happen if inside Helpers.SafeRunWithEnv's xpcall the Helpers.FailCallback isn't called properly 
+        errInfo = {
+            reason = errInfo
+        }
+    end
 
     -- If the error came through without a source line,
     -- we'll use the function definition
