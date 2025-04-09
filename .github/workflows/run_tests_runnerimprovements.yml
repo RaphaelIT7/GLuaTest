@@ -152,7 +152,6 @@ jobs:
           cp --recursive --verbose $source/* "$dest/"
 
       - name: Sync custom overrides
-        if: ${{ inputs.custom-overrides }}
         run: |
           rsync --verbose --archive ${{ inputs.custom-overrides }} $GITHUB_WORKSPACE/garrysmod_override/
           mkdir -p ${{ github.workspace }}/gluatest/docker/_gluatest_artifacts/ # Silently also setup the artifacts dir
