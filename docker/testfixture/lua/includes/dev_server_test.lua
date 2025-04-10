@@ -27,8 +27,8 @@ hook.Add( "GLuaTest_LoggedTestFailure", "TestLog", function( errInfo )
 
     if ghOutput:GetBool() then
         local fi = failInfo
-        local str = "::error file=%s,line=%s::%s"
-        print( string_format( str, fi.sourceFile, fi.lineNumber, fi.reason ) )
+        local str = "::error file=%s,line=%s::%s\n"
+        MsgC( color_white, string_format( str, fi.sourceFile, fi.lineNumber, fi.reason ) )
     end
 end )
 
