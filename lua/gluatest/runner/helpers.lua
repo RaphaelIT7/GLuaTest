@@ -187,7 +187,7 @@ end
 function Helpers.findStackInfo()
     -- Step up through the stacks to find the error we care about
 
-    for stack = 1, 12 do
+    for stack = 1, 20 do
         local info = debug.getinfo( stack, "lnS" )
         if not info then break end
 
@@ -235,7 +235,7 @@ function Helpers.FailCallback( reason )
 
     return {
         reason = cleanReason,
-        sourceFile = info.short_src,
+        sourceFile = info.short_src ~= "[C]" and info.short_src, -- Inside loggger.lua ->  ResultLogger.LogTestFailureDetails it will fallback to the origin of the case function that failed.
         lineNumber = info.currentline,
         locals = locals
     }

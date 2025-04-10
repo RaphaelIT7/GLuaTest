@@ -253,7 +253,7 @@ function ResultLogger.LogTestFailureDetails( failure )
     if not errInfo.sourceFile then
         local debugInfo = debug.getinfo( case.func )
         errInfo.sourceFile = debugInfo.short_src
-        errInfo.lineNumber = debugInfo.linedefined
+        errInfo.lineNumber = debugInfo.lastlinedefined -- We assume it was a tail call that errored
     end
 
     ResultLogger.logTestCaseFailure( errInfo )
