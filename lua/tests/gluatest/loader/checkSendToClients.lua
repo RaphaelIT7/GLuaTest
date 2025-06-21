@@ -68,6 +68,13 @@ return {
             cleanup = function( state )
                 GLuaTest.RunClientsideConVar:SetBool( state.currentRunClientside )
             end
+        },
+
+        {
+            name = "Error",
+            func = function( state )
+                error("Yes")
+            end
         }
     }
 }
