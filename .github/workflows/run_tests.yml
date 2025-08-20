@@ -72,7 +72,7 @@ on:
         type: string
         required: false
         description: "Which tag/branch of GLuaTest to run"
-        default: "main"
+        default: "holylib_v2"
 
       custom-overrides:
         type: string
@@ -112,6 +112,8 @@ on:
     secrets:
       secret-startup-args:
         required: false
+      secret-additional-setup:
+        required: false
 
 jobs:
   test:
@@ -121,7 +123,7 @@ jobs:
     steps:
       - name: "Check out the repo"
         if: ${{ inputs.no-checkout != 'true' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           path: project
 
@@ -196,7 +198,7 @@ jobs:
 
       - name: Download artifact (Github)
         if: inputs.download-artifact != '' && !(startsWith(inputs.download-artifact, 'https://') || startsWith(inputs.download-artifact, 'http://'))
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/gluatest/docker/_gluatest_artifacts/
           name: "${{ inputs.download-artifact }}"
@@ -208,10 +210,10 @@ jobs:
           wget -O artifact.tar.gz ${{ inputs.download-artifact }} # No matter what, we expect it as a .tar.gz
 
       - name: Run Additional Setup
-        if: inputs.additional-setup != ''
         run: |
           cd ${{ github.workspace }}
           ${{ inputs.additional-setup }}
+          ${{ secrets.secret-additional-setup }}
 
       - name: Pull GLuaTest Runner
         if: inputs.dockerbuild != 'true'
@@ -219,11 +221,6 @@ jobs:
           GMOD_BRANCH: "${{ inputs.branch }}"
         run: |
           cd $GITHUB_WORKSPACE/gluatest/docker
-
-          # RaphaelIT7: Backwards compatibility since I broke it
-          if [ "$GMOD_BRANCH" = "live" ]; then
-            export GMOD_BRANCH="public"
-          fi
 
           docker compose pull
 
@@ -240,7 +237,7 @@ jobs:
             --build-arg="GMOD_BRANCH=${{ inputs.branch }}" \
             --build-arg="GLUATEST_REPO=${{ inputs.gluatest-repo }}.git" \
             --build-arg="GLUATEST_REF=${{ inputs.gluatest-ref }}" \
-            --tag ghcr.io/cfc-servers/gluatest/${{ inputs.branch }}:latest .
+            --tag ghcr.io/cfc-servers/gluatest:latest .
 
       - name: Run GLuaTest
         env:
@@ -257,11 +254,6 @@ jobs:
           GMOD_BRANCH: "${{ inputs.branch }}"
         run: |
           cd $GITHUB_WORKSPACE/gluatest/docker
-
-          # RaphaelIT7: Backwards compatibility since I broke it
-          if [ "$GMOD_BRANCH" = "live" ]; then
-            export GMOD_BRANCH="public"
-          fi
 
           # RaphaelIT7: Setting up the core pattern here as inside the docker image it's a read-only filesystem
           echo "core" | sudo tee /proc/sys/kernel/core_pattern
@@ -291,7 +283,7 @@ jobs:
 
       - name: Upload Test Log Artifact
         if: always() && inputs.logs-as-artifact == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: gluatest-log-${{ inputs.branch }}
           path: ${{ github.workspace }}/gluatest-log-${{ inputs.branch }}.log

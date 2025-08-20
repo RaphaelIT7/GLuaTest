@@ -2,16 +2,12 @@ name: Check for Update and Build Parallel
 
 on:
   workflow_dispatch:
-    inputs:
-      force_rebuild:
-        description: 'Force rebuild all images regardless of version checks'
-        required: false
-        type: boolean
-        default: false
   push:
+  schedule:
+    - cron: "0 */12 * * *"
 
 jobs:
-  trigger_builds:
+  builds: # We always build since it's pointless to even do the effort to not do it.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -47,6 +43,8 @@ jobs:
 
       - name: Make slim image
         shell: bash
+        env:
+          GMOD_BRANCH: "${{ matrix.branch }}"
         run: |
           cd docker
 
