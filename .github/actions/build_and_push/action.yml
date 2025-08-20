@@ -16,11 +16,10 @@ inputs:
   github_token:
     description: "GitHub Token"
     required: true
-  game_version:
-    description: "The version ID for this build of gmod"
-    required: true
   path:
     description: "The path to the gluatest project"
+    required: true
+  DOCKERHUB_TOKEN:
     required: true
 
 runs:
@@ -49,18 +48,7 @@ runs:
       run: |
         cd ${{ inputs.path }}/docker
 
-        if [ "${{ inputs.gmod_branch }}" = "x86-64" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/64bit
-        elif [ "${{ inputs.gmod_branch }}" = "dev" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/dev
-        elif [ "${{ inputs.gmod_branch }}" = "prerelease" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/prerelease
-        else
-          BASE=ghcr.io/cfc-servers/gluatest
-        fi
-
         rawVersionTag=${{ inputs.tag_name }}
-        id=${{ inputs.game_version }}
         $GITHUB_WORKSPACE/docker-slim build \
           --target gluatest_fat:latest \
           --http-probe-off \
@@ -75,40 +63,15 @@ runs:
           --include-bin "/usr/bin/gzip" \
           --include-bin "/home/steam/gmodserver/bin/libbass.so" \
           --include-bin "/home/steam/gmodserver/bin/linux64/libbass.so" \
-          --tag $BASE:$rawVersionTag \
-          --tag $BASE:gamebuild-$id
+          --tag raphaelit7/gluatest:${{ inputs.gmod_branch }}
 
-        # Tag image with "0.27" if we push tag "0.27.5"
-        # but not if we push tag "0.27-pre5"
-        parentMinorVersion=${rawVersionTag%.*}
-        if [[ $parentMinorVersion != "0" ]]; then
-          echo "::warning:: Tagging with parent minor version: $parentMinorVersion"
-          docker tag $BASE:$rawVersionTag $BASE:$parentMinorVersion
-        fi
-
-        if [ "${{ inputs.release }}" = "true" ]; then
-          echo "::warning:: Tagging this release as the latest!"
-          docker tag $BASE:$rawVersionTag $BASE:latest
-        fi
-
-    - name: Login to GitHub Container Registry
+    - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ inputs.github_token }}
+        username: raphaelit7
+        password: ${{ inputs.DOCKERHUB_TOKEN }}
 
     - name: Tag and push slim image
       shell: bash
       run: |
-        if [ "${{ inputs.gmod_branch }}" = "x86-64" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/64bit
-        elif [ "${{ inputs.gmod_branch }}" = "dev" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/dev
-        elif [ "${{ inputs.gmod_branch }}" = "prerelease" ]; then
-          BASE=ghcr.io/cfc-servers/gluatest/prerelease
-        else
-          BASE=ghcr.io/cfc-servers/gluatest
-        fi
-
-        docker push "$BASE" --all-tags
+        docker push raphaelit7/gluatest:${{ inputs.gmod_branch }}

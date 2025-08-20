@@ -1,8 +1,8 @@
 FROM ghcr.io/cfc-servers/steamcmd:latest
 
 ARG GMOD_BRANCH=live
-ARG GLUATEST_REF=main
-ARG GLUATEST_REPO=https://github.com/CFC-Servers/GLuaTest.git
+ARG GLUATEST_REF=holylib_v2
+ARG GLUATEST_REPO=https://github.com/RaphaelIT7/GLuaTest.git
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive

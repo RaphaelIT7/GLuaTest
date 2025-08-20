@@ -66,7 +66,7 @@ on:
         type: string
         required: false
         description: "The GLuaTest repository to use. This is usually the same as the one this action is in"
-        default: "https://github.com/CFC-Servers/GLuaTest"
+        default: "https://github.com/RaphaelIT7/GLuaTest"
 
       gluatest-ref:
         type: string
