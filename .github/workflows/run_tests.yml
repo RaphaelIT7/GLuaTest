@@ -90,7 +90,7 @@ on:
         type: string
         required: false
         description: "Which tag/branch of GLuaTest to run"
-        default: "main"
+        default: "holylib_v2"
 
       custom-overrides:
         type: string
@@ -152,7 +152,7 @@ jobs:
     steps:
       - name: "Check out the repo"
         if: ${{ inputs.no-checkout != 'true' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           path: project
 
@@ -227,7 +227,7 @@ jobs:
 
       - name: Download artifact (Github)
         if: inputs.download-artifact != '' && !(startsWith(inputs.download-artifact, 'https://') || startsWith(inputs.download-artifact, 'http://'))
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/gluatest/docker/_gluatest_artifacts/
           name: "${{ inputs.download-artifact }}"
@@ -270,7 +270,7 @@ jobs:
             --build-arg="GMOD_BRANCH=${{ inputs.branch }}" \
             --build-arg="GLUATEST_REPO=${{ inputs.gluatest-repo }}.git" \
             --build-arg="GLUATEST_REF=${{ inputs.gluatest-ref }}" \
-            --tag ghcr.io/cfc-servers/gluatest/${{ inputs.branch }}:latest .
+            --tag ghcr.io/cfc-servers/gluatest:latest .
 
       - name: Run GLuaTest
         env:
@@ -330,7 +330,7 @@ jobs:
 
       - name: Upload Test Log Artifact
         if: always() && inputs.logs-as-artifact == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: gluatest-log-${{ inputs.branch }}${{ inputs.use-64bit == 'true' && '-64x' || '' }}
           path: ${{ github.workspace }}/gluatest-log-${{ inputs.branch }}${{ inputs.use-64bit == 'true' && '-64x' || '' }}.log
