@@ -10,8 +10,8 @@ gmodbranch="${GMOD_BRANCH}"
 # Make sure docker-slim doesn't remove bins we'll eventually need
 echo $(date)
 python3 -c "print()" &> /dev/null
-git clone --depth 1 git@github.com:CFC-Servers/GLuaTest.git _tmp_ssh &> /dev/null
-git clone --depth 1 https://github.com/CFC-Servers/GLuaTest.git _tmp_https &> /dev/null
+git clone --depth 1 git@github.com:RaphaelIT7/GLuaTest.git _tmp_ssh &> /dev/null
+git clone --depth 1 https://github.com/RaphaelIT7/GLuaTest.git _tmp_https &> /dev/null
 rm -rf _tmp_ssh _tmp_https
 
 # Copy the overrides overtop the server files

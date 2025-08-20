@@ -104,8 +104,8 @@ local function httpHello( version )
     HTTP( {
         method = "GET",
         url = "https://hello.gluatest.com?version=" .. urlEncode( version ),
-        success = function() end,
-        failed = function() end,
+        success = function() print("[GLuaTest] Sent hello request") end,
+        failed = function() print("[GLuaTest] Failed to send hello request") end,
     } )
 end
 
