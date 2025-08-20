@@ -13,7 +13,6 @@ local VersionTools = include( "utils/version.lua" )
 local conVarFlags = bit.bor( FCVAR_ARCHIVE, FCVAR_PROTECTED )
 
 local isHotload = GLuaTest ~= nil
-local activeFilter = ""
 --- @class GLuaTest
 GLuaTest = {
     --- @diagnostic disable-next-line: param-type-mismatch
@@ -23,25 +22,13 @@ GLuaTest = {
     --- @diagnostic disable-next-line: param-type-mismatch
     SelfTestConVar      = CreateConVar( "gluatest_selftest_enable", "0", conVarFlags, "Should GLuaTest run its own tests?" ),
     --- @diagnostic disable-next-line: param-type-mismatch
-    HttpHelloConVar     = CreateConVar( "gluatest_http_hello",      "1", conVarFlags, "Should GLuaTest send an anonymous usage ping the first time tests run?" ),
-    --- @diagnostic disable-next-line: param-type-mismatch
-    HttpHelloProjectConVar = CreateConVar( "gluatest_http_hello_project", "", conVarFlags, "Optional project name to include in the usage ping. Leave it empty to send no name" ),
-    --- @diagnostic disable-next-line: param-type-mismatch
-    HttpHelloRunnerConVar = CreateConVar( "gluatest_http_hello_runner", "", conVarFlags, "What started this test run, included in the usage ping. Set by the GitHub workflow and the local runner" ),
-    --- @diagnostic disable-next-line: param-type-mismatch
-    FilterConVar        = CreateConVar( "gluatest_filter", "", FCVAR_PROTECTED, "Only run test groups whose path or group name contains one of these space-separated terms" ),
-
-    --- @type GLuaTest_Loader
-    Loader = include( "gluatest/loader.lua" ),
+    HttpHelloConVar     = CreateConVar( "gluatest_http_hello", "1", conVarFlags, "Should GLuaTest ping the GLuaTest hello endpoint?" ),
 
     DeprecatedNotice = function( old, new )
         local msg = [[GLuaTest: (DEPRECATION NOTICE) "]] .. old .. [[" is deprecated, use "]] .. new .. [[" instead.]]
         if SERVER then MsgC( RED, msg .. "\n" ) end
     end
 }
-
--- extensions send themselves to clients with AddCSLuaFile
-GLuaTest.Loader.loadExtensions( "gluatest/extensions" )
 
 --[[ Set Up Client Testing ]] do
     if SERVER then
@@ -69,13 +56,11 @@ GLuaTest.Loader.loadExtensions( "gluatest/extensions" )
         AddCSLuaFile( "gluatest/runner/test_group_runner.lua" )
 
         -- /expectations/*
-        AddCSLuaFile( "gluatest/expectations/arg.lua" )
         AddCSLuaFile( "gluatest/expectations/expect.lua" )
         AddCSLuaFile( "gluatest/expectations/negative.lua" )
         AddCSLuaFile( "gluatest/expectations/positive.lua" )
 
         -- /expectations/utils/*
-        AddCSLuaFile( "gluatest/expectations/utils/called_with.lua" )
         AddCSLuaFile( "gluatest/expectations/utils/table_diff.lua" )
 
         -- When the server finishes its tests, notify clients to start theirs
@@ -86,7 +71,6 @@ GLuaTest.Loader.loadExtensions( "gluatest/extensions" )
             timer.Simple( 0.1, function()
                 if GLuaTest.RunClientsideConVar:GetBool() then
                     net.Start( "GLuaTest_RunClientTests" )
-                    net.WriteString( activeFilter )
                     net.Broadcast()
                 end
             end )
@@ -100,56 +84,36 @@ GLuaTest.Loader.loadExtensions( "gluatest/extensions" )
                 error( "[GLuaTest] Client tests are attempting to run before GLuaTest has initialized" )
             end
 
-            GLuaTest.runAllTests( net.ReadString() )
+            GLuaTest.runAllTests()
         end )
     end
 end
 
---- @param testGroups GLuaTest_TestGroup[]
-GLuaTest.sendUsagePing = function( testGroups )
-    if not GLuaTest.HttpHelloConVar:GetBool() then return end
+--- Encodes a string for use in a URL param
+--- @param str string
+local function urlEncode( str )
+    if not str then return "" end
 
-    local caseCount = 0
-    for i = 1, #testGroups do
-        caseCount = caseCount + #testGroups[i].cases
-    end
+    str = string.gsub( str, "([^%w%-%._~])", function( c )
+        return string.format( "%%%02X", string.byte( c ) )
+    end )
 
-    local parameters = {
-        version = VersionTools.getAnonymousVersion(),
-        branch = BRANCH or "unknown",
-        groups = tostring( #testGroups ),
-        cases = tostring( caseCount ),
-    }
+    return str
+end
 
-    -- "github", "local", or "agent/claude-code"
-    local runner = GLuaTest.HttpHelloRunnerConVar:GetString()
-    if runner ~= "" then parameters.runner = runner end
-
-    local projectName = GLuaTest.HttpHelloProjectConVar:GetString()
-    if projectName == "" then
-        print( "[GLuaTest] Sending an anonymous usage ping. Disable it with gluatest_http_hello 0" )
-    else
-        parameters.project = projectName
-        print( "[GLuaTest] Sending a usage ping for \"" .. projectName .. "\". Disable it with gluatest_http_hello 0" )
-    end
+--- Runs a simple ping against the GLuatest Hello endpoint
+--- (Helps us get a rough idea of how many people use GLuaTest, as well as preserving HTTP during container minification)
+--- @param version string
+local function httpHello( version )
+    local shouldRun = GLuaTest.HttpHelloConVar:GetBool()
+    if not shouldRun then return end
 
     HTTP( {
         method = "GET",
-        url = "https://hello.gluatest.com/ping",
-        parameters = parameters,
+        url = "https://hello.gluatest.com?version=" .. urlEncode( version ),
         success = function() end,
         failed = function() end,
     } )
-end
-
-local usagePingSent = isHotload
-
---- @param testGroups GLuaTest_TestGroup[]
-local function sendUsagePingOnce( testGroups )
-    if usagePingSent then return end
-    usagePingSent = true
-
-    GLuaTest.sendUsagePing( testGroups )
 end
 
 --- @param loader GLuaTest_Loader
@@ -178,24 +142,8 @@ local function loadAllProjectsFrom( loader, path, testFiles )
     end
 end
 
---- @param filter string
---- @param matchedCount number
---- @param totalCount number
-local function logFilterMatches( filter, matchedCount, totalCount )
-    if filter == "" then return end
-
-    local color = matchedCount == 0 and RED or color_white
-    local message = string.format( "[GLuaTest] Filter '%s' matched %d of %d test groups\n", filter, matchedCount, totalCount )
-
-    MsgC( color, message )
-end
-
---- Loads and runs the tests in the tests/ directory
---- @param filter? string Space-separated terms that limit which test groups run. Defaults to the gluatest_filter convar
-GLuaTest.runAllTests = function( filter )
-    filter = filter or GLuaTest.FilterConVar:GetString()
-    if SERVER then activeFilter = filter end
-
+--- Loads and runs all tests in the tests/ directory
+GLuaTest.runAllTests = function()
     local shouldRunServerside = GLuaTest.RunServersideConVar:GetBool()
     local shouldRunClientside = GLuaTest.RunClientsideConVar:GetBool()
 
@@ -203,7 +151,6 @@ GLuaTest.runAllTests = function( filter )
         -- Alert the client immediately if we are skipping server tests and are still running client tests
         if shouldRunClientside then
             net.Start( "GLuaTest_RunClientTests" )
-            net.WriteString( activeFilter )
             net.Broadcast()
         end
 
@@ -216,6 +163,10 @@ GLuaTest.runAllTests = function( filter )
 
     GLuaTest.VERSION = VersionTools.getVersion()
 
+    --- @type GLuaTest_Loader
+    local Loader = include( "gluatest/loader.lua" )
+    Loader.loadExtensions( "gluatest/extensions" )
+
     local testPaths = {
         "tests",
         GAMEMODE.FolderName .. "/gamemode/tests"
@@ -223,19 +174,16 @@ GLuaTest.runAllTests = function( filter )
     hook.Run( "GLuaTest_AddTestPaths", testPaths )
 
     --- @type GLuaTest_TestGroup[]
-    local allTestFiles = {}
+    local testFiles = {}
 
     for i = 1, #testPaths do
         local path = testPaths[i]
-        loadAllProjectsFrom( GLuaTest.Loader, path, allTestFiles )
+        loadAllProjectsFrom( Loader, path, testFiles )
     end
 
-    hook.Run( "GLuaTest_RunTestFiles", allTestFiles )
+    hook.Run( "GLuaTest_RunTestFiles", testFiles )
 
-    local testFiles = GLuaTest.Loader.filterTestGroups( allTestFiles, filter )
-    logFilterMatches( filter, #testFiles, #allTestFiles )
-
-    if SERVER then sendUsagePingOnce( testFiles ) end
+    httpHello( GLuaTest.VERSION )
 
     --- @type GLuaTest_TestRunner
     local runner = include( "gluatest/runner/runner.lua" )
@@ -250,12 +198,5 @@ if not isHotload then
     end )
 end
 
---- @param argumentString string
-local function runTestsCommand( _, _, _, argumentString )
-    if argumentString == "" then return GLuaTest.runAllTests() end
-
-    GLuaTest.runAllTests( argumentString )
-end
-
 --- @diagnostic disable-next-line: param-type-mismatch
-concommand.Add( "gluatest_run_tests", runTestsCommand, nil, "Run the tests in the tests/ directory. Optional arguments limit the run to test groups whose path or group name contains one of them", FCVAR_PROTECTED )
+concommand.Add( "gluatest_run_tests", GLuaTest.runAllTests, nil, "Run all tests in the tests/ directory", FCVAR_PROTECTED )
