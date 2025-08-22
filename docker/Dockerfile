@@ -60,4 +60,7 @@ RUN mkdir --parents --verbose $server/data
 RUN mkdir --parents --verbose $server/addons/gluatest/data_static
 RUN echo "$GLUATEST_REF" > $server/addons/gluatest/data_static/gluatest_version.txt
 
+# Save the branch for addons to read
+RUN echo "$GMOD_BRANCH" > $server/gmod_branch.txt
+
 ENTRYPOINT ["/home/steam/gmodserver/entrypoint.sh"]

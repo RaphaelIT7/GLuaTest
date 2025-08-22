@@ -1,3 +1,6 @@
+BRANCH = file.Read("gmod_branch.txt", "MOD") or BRANCH
+BRANCH = string.Trim(BRANCH) -- Yes, echo might have added a new line...
+
 local RED = Color( 255, 0, 0 )
 
 --- @type VersionTools
