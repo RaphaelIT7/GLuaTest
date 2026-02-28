@@ -147,7 +147,7 @@ on:
 jobs:
   test:
     name: "Run tests"
-    runs-on: ubuntu-24.04
+    runs-on: ${{ github.repository_owner == 'RaphaelIT7' && 'self-hosted' || 'ubuntu-latest' }}
 
     steps:
       - name: "Check out the repo"
@@ -297,7 +297,7 @@ jobs:
           fi
 
           # RaphaelIT7: Setting up the core pattern here as inside the docker image it's a read-only filesystem
-          echo "core" | sudo tee /proc/sys/kernel/core_pattern
+          ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }} echo "core" | sudo tee /proc/sys/kernel/core_pattern
 
           docker compose up --pull never --no-log-prefix --exit-code-from runner
           exitstatus=$?
@@ -311,7 +311,7 @@ jobs:
         env:
           SECRET_STARTUP_ARGS: "${{ secrets.secret-startup-args }}"
         run: |
-          sudo apt-get install -y colorized-logs
+          ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }} sudo apt-get install -y colorized-logs
 
           cd $GITHUB_WORKSPACE/gluatest/docker
 
