@@ -118,7 +118,7 @@ on:
 jobs:
   test:
     name: "Run tests"
-    runs-on: ${{ github.repository_owner == 'RaphaelIT7' && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: 'ubuntu-latest' #${{ github.repository_owner == 'RaphaelIT7' && 'self-hosted' || 'ubuntu-latest' }}
 
     steps:
       - name: "Check out the repo"
@@ -141,7 +141,7 @@ jobs:
           cd $GITHUB_WORKSPACE
 
           # RaphaelIT7: I use self-hosted runners where the files may remain across runs, so we gotta clean
-          rm -rf gluatest
+          # rm -rf gluatest
           git clone --single-branch --depth 1 ${{ inputs.gluatest-repo }}.git gluatest
 
           cd gluatest
@@ -258,7 +258,8 @@ jobs:
           cd $GITHUB_WORKSPACE/gluatest/docker
 
           # RaphaelIT7: Setting up the core pattern here as inside the docker image it's a read-only filesystem
-          ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }} echo "core" | sudo tee /proc/sys/kernel/core_pattern
+          # ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }}
+          echo "core" | sudo tee /proc/sys/kernel/core_pattern
 
           docker compose up --pull never --no-log-prefix --exit-code-from runner
           exitstatus=$?
@@ -270,7 +271,8 @@ jobs:
       - name: Capture Docker Logs
         if: always() && inputs.logs-as-artifact == 'true'
         run: |
-          ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }} sudo apt-get install -y colorized-logs
+          # ${{ github.repository_owner == 'RaphaelIT7' && '#' || '' }}
+          sudo apt-get install -y colorized-logs
 
           cd $GITHUB_WORKSPACE/gluatest/docker
 
