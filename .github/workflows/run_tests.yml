@@ -140,6 +140,8 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
+          # RaphaelIT7: I use self-hosted runners where the files may remain across runs, so we gotta clean
+          rm -rf gluatest
           git clone --single-branch --depth 1 ${{ inputs.gluatest-repo }}.git gluatest
 
           cd gluatest
