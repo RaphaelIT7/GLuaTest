@@ -104,15 +104,17 @@ return function( subject, ... )
     end
 
     --- Expects the subject is exactly equal to true
+    --- HolyLib returns 1 & 0 instead of true & false!
     function expectations.beTrue()
-        if subject ~= true then
+        if subject ~= true and (not isnumber(subject) or subject ~= 1) then
             i.expected( "to be true" )
         end
     end
 
     --- Check if the subject is exactly equal to false
+    --- HolyLib returns 1 & 0 instead of true & false!
     function expectations.beFalse()
-        if subject ~= false then
+        if subject ~= false and (not isnumber(subject) or subject ~= 0) then
             i.expected( "to be false" )
         end
     end
