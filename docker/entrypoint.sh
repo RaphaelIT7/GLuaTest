@@ -152,10 +152,12 @@ if [ "$status" -ne 0 ]; then
 fi
 
 if [ -f "$gmodroot/debug.log" ]; then
-	cat "$gmodroot/debug.log" # Dump the entire debug log
+    cat "$gmodroot/debug.log" # Dump the entire debug log
 
-	echo "::error:: Server crashed! - Failing workflow"
-	exit 1
+    cat $gmodroot/garrysmod/holylib/crashes/*.log # HolyLib specific
+
+    echo "::error:: Server crashed! - Failing workflow"
+    exit 1
 fi
 
 if [ ! -f "$server/data/gluatest_clean_exit.txt" ] || [ "$(cat $server/data/gluatest_clean_exit.txt)" = "false" ]; then
