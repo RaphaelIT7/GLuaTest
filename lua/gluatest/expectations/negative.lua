@@ -172,6 +172,7 @@ return function( subject, ... )
     function expectations.succeed()
         assert( TypeID( subject ) == TYPE_FUNCTION, ".succeed expects a function" )
 
+        jit.off( subject, false )
         local success = pcall( subject, unpack( args ) )
 
         if success ~= false then
@@ -183,6 +184,7 @@ return function( subject, ... )
     function expectations.err()
         assert( TypeID( subject ) == TYPE_FUNCTION, ".err expects a function" )
 
+        jit.off( subject, false )
         local success = pcall( subject, unpack( args ) )
 
         if success ~= true then
@@ -196,6 +198,7 @@ return function( subject, ... )
         assert( TypeID( subject ) == TYPE_FUNCTION, ".errWith expects a function" )
         assert( isstring( comparison ), "errWith expects a string" )
 
+        jit.off( subject, false )
         local success, err = pcall( subject, unpack( args ) )
 
         if success == true then
