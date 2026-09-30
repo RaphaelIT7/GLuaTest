@@ -253,6 +253,11 @@ end
 function ResultLogger.LogTestFailureDetails( failure )
     local case = failure.case
     local errInfo = failure.errInfo or {}
+    if isstring(errInfo) then -- RaphaelIT7: I got no idea how this happens
+    	errInfo = {
+    		reason = errInfo
+    	}
+    end
 
     -- If the error came through without a source line,
     -- we'll use the function definition
