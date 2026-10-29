@@ -8,7 +8,7 @@ on:
 
 jobs:
   builds: # We always build since it's pointless to even do the effort to not do it.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
