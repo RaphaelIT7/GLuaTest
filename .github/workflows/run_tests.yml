@@ -261,6 +261,8 @@ jobs:
           TIMEOUT: "${{ inputs.timeout }}"
           GMOD_BRANCH: "${{ inputs.branch }}"
           USE_64BIT: "${{ inputs.use_64bit }}"
+          HELLO_PROJECT_NAME: "${{ github.repository }}"
+          HELLO_RUNNER: "github"
         run: |
           cd $GITHUB_WORKSPACE/gluatest/docker
 
